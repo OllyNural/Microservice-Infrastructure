@@ -1,6 +1,9 @@
 #!/bin/bash
 
-sh src/components/application/ecr/create.sh
+cd src
+
+cd components/application/ecr/ && sh create.sh
+cd ../../../
 
 # sh src/components/application/cluster/create.sh
 
