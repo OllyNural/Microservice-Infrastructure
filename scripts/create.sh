@@ -3,11 +3,14 @@
 cd src
 
 cd components/application/ecr
-ls
 sh create.sh
 cd ../../../
 
-# sh src/components/application/cluster/create.sh
+
+cd components/application/cluster
+sh create.sh
+cd ../../../
+
 
 # sh src/components/application/tasks/create.sh
 
