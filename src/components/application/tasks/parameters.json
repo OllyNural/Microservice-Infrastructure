@@ -1,6 +1,10 @@
 [
     {
-      "ParameterKey": "nodepath",
+      "ParameterKey": "NodePath",
       "ParameterValue": "src/"
+    },
+    {
+      "ParameterKey": "ImagePath",
+      "ParameterValue": "257200663051.dkr.ecr.eu-west-1.amazonaws.com/portfolio-repository"
     }
   ]

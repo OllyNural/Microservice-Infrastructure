@@ -2,7 +2,8 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "Create task definitions to define how to run the build portfolio ",
   "Parameters": {
-    "nodepath": {
+    "PortfolioImageURI": {
+      "Description": "URI of ECR repository containing the built docker iamge",
       "Type": "String"
     }
   },
@@ -17,7 +18,7 @@
               "Fn::Join": [
                 "",
                 [
-                  { "Fn::ImportValue": "portfolio-repository" },
+                  { "Ref": "PortfolioImageURI" },
                   ":latest"
                 ]
               ]
@@ -29,8 +30,8 @@
             }],
             "Environment": [
               {
-                "Name": "nodepath",
-                "Value": { "Ref": "nodepath" }
+                "Name": "NODE_PATH",
+                "Value": "src/"
               }
             ]
           }

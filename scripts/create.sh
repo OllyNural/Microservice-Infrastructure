@@ -29,20 +29,20 @@ echo "WAITING - waiting on create Task: portfolio-task"
 aws cloudformation wait stack-create-complete --region eu-west-1 --stack-name portfolio-task
 cd ../../../
 
-cd components/application/ec2
-echo "CREATE - Attempting to create EC2: portfolio-ec2"
-aws cloudformation create-stack --region eu-west-1 --stack-name portfolio-ec2 --template-body file://template.json --parameters file://parameters.json
-
-echo "WAITING - waiting on create EC2: portfolio-ec2"
-aws cloudformation wait stack-create-complete --region eu-west-1 --stack-name portfolio-ec2
-cd ../../../
-
 cd components/application/cluster
 echo "CREATE - Attempting to create Cluster: portfolio-cluster"
 aws cloudformation create-stack --region eu-west-1 --stack-name portfolio-cluster --template-body file://template.json --parameters file://parameters.json
 
 echo "WAITING - waiting on create Cluster: portfolio-cluster"
 aws cloudformation wait stack-create-complete --region eu-west-1 --stack-name portfolio-cluster
+cd ../../../
+
+cd components/application/ec2
+echo "CREATE - Attempting to create EC2: portfolio-ec2"
+aws cloudformation create-stack --region eu-west-1 --stack-name portfolio-ec2 --template-body file://template.json --parameters file://parameters.json
+
+echo "WAITING - waiting on create EC2: portfolio-ec2"
+aws cloudformation wait stack-create-complete --region eu-west-1 --stack-name portfolio-ec2
 cd ../../../
 
 cd components/application/services
