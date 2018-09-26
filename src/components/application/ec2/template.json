@@ -31,7 +31,7 @@
               [
                 "#!/bin/bash -xe\n",
                 "echo ECS_CLUSTER=",
-                { "Fn::ImportValue": "portfolio-task" },
+                { "Fn::ImportValue": "portfolio-cluster" },
                 " >> /etc/ecs/ecs.config\n"
               ]
             ]
