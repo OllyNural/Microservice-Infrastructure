@@ -17,7 +17,7 @@
               "Fn::Join": [
                 "",
                 [
-                  { "Fn::ImportValue": "PortfolioECRepositoryARN" },
+                  { "Fn::ImportValue": "portfolio-repository" },
                   ":latest"
                 ]
               ]
