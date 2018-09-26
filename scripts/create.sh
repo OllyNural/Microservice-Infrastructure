@@ -11,6 +11,18 @@ cd components/application/cluster
 sh create.sh
 cd ../../../
 
+cd components/application/tasks
+sh create.sh
+cd ../../../
+
+cd components/application/services
+sh create.sh
+cd ../../../
+
+# cd components/application/ec2
+# sh create.sh
+# cd ../../../
+
 
 # sh src/components/application/tasks/create.sh
 
