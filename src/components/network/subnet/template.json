@@ -1,13 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "Creates Subnets",
-  "Mappings": {
-    "RegionVpcName": {
-      "eu-west-2": {
-        "kDev": "kDevVPCeu-west-2"
-      }
-    }
-  },
   "Parameters": {
     "PrivateSubnetCCIDR": {
       "Description": "Cidr Block of the Subnet",
