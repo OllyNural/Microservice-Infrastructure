@@ -1,0 +1,44 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Creates EC2 instances",
+  "Parameters": {
+    "KeyName": {
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "EC2Instance": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Properties": {
+        "ImageId": "ami-0bdb1d6c15a40392c",
+        "InstanceType": "t2.small",
+        "AssociatePublicIpAddress": true,
+        "KeyName": {"Ref": "KeyName"},
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash -xe\n",
+                "echo ECS_CLUSTER=",
+                { "Fn::ImportValue": "portfolio-task" },
+                " >> /etc/ecs/ecs.config\n"
+              ]
+            ]
+          }
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "EC2Instance": {
+      "Description": "The instance of an EC2 to run our docker iamges on",
+      "Export": {
+          "Name": "portfolio-ec2"
+      },
+      "Value": {
+        "Ref": "EC2Instance"
+      }
+    }
+  }
+}

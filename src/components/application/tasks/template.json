@@ -1,0 +1,53 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Create task definitions to define how to run the build portfolio ",
+  "Parameters": {
+    "repositoryName": {
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "PortfolioTask": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Name": "portfolio-task",
+            "Image": {
+              "Fn::Join": [
+                "",
+                [
+                  { "Ref": "ConsentsRepositoryAddress"},
+                  ":",
+                  { "Ref": "ConsentsTagName" }
+                ]
+              ]
+            },
+            "Memory": "128",
+            "PortMappings": [{
+                "ContainerPort": "8080",
+                "HostPort" : "80"
+            }],
+            "Environment": [
+              {
+                "Name": "NODE_PATH",
+                "Value": "src/"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "PortfolioTask": {
+      "Description": "The Task definition to run the task definition",
+      "Export": {
+          "Name": "portfolio-task"
+      },
+      "Value": {
+        "Ref": "PortfolioTask"
+      }
+    }
+  }
+}

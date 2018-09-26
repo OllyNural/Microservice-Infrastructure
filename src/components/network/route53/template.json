@@ -1,0 +1,853 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Set up Konsentus Stack",
+    "Parameters": {
+      "ClusterName": { "Description": "Cluster name", "Type": "String" },
+      "SubnetA": { "Type": "String" },
+      "SubnetB": { "Type": "String" },
+      "SubnetC": { "Type": "String" },
+      "KeyName": { "Description": "Ec2 Key Pair for SSH Access", "Type": "String" },
+      "VpcId": { "Type": "String" },
+      "EC2SecurityGroup": { "Type": "String" },
+      "IamInstanceProfile": { "Type": "String" },
+      "SSLCert": { "Type": "String" },
+      "RDSUsername": { "Type": "String" },
+      "RDSPassword": { "Type": "String" },
+      "DDHostName": { "Type": "String" },
+      "DDApiKey": { "Type": "String" },
+      "RDSInstanceIdentifier": { "Type": "String" },
+      "TargetGroupName": { "Type": "String" },
+      "DNSSubDomain": { "Type": "String" },
+      "APIGatewayPathPattern": {"Type": "String"},
+      "TPPAuthenticationPathPattern": {"Type": "String"},
+      "TPPAuthenticationUri": {"Type": "String"},
+      "ApiStubRepositoryAddress": { "Type": "String" },
+      "ApiStubTagName": { "Type": "String" },
+      "TPPAuthenticationTargetGroupName": { "Type": "String" },
+      "TPPAuthenticationRepositoryAddress": { "Type": "String" },
+      "TPPAuthenticationTagName": { "Type": "String" },
+      "RDSSecurityGroupGateway": { "Type": "String"} ,
+      "NodeEnv": { "Type": "String" },
+      "ImmutableLogRepositoryAddress": { "Type": "String" },
+      "ImmutableLogTagName": { "Type": "String" },
+      "ImmutableLogTargetGroupName": { "Type": "String" },
+      "ImmutableLogPathPattern": { "Type": "String" },
+      "ImmutableLogRDSInstanceIdentifier": { "Type": "String" },
+      "ImmutableLogRDSUsername": { "Type": "String" },
+      "ImmutableLogRDSPassword": { "Type": "String" },
+      "ImmutableLogRDSSecurityGroupGateway": { "Type": "String" },
+      "ImmutableLogUri": { "Type": "String" },
+      "SentryConfigEnvironment": {"Type": "String"},
+      "SentryConfigConnectionString": {"Type": "String"},
+      "TPPAuthenticationRDSUsername": { "Type": "String" },
+      "TPPAuthenticationRDSPassword": { "Type": "String" },
+      "TPPAuthenticationRDSInstanceIdentifier": { "Type": "String" },
+      "ImmutableLogsPort": { "Type": "Number" },
+      "ImmutableLogsSecret": { "Type": "String" },
+      "ImmutableLogsLogLevel": { "Type": "String" },
+      "ConsentsRepositoryAddress": { "Type": "String" },
+      "ConsentsTagName": { "Type": "String" },
+      "ConsentsTargetGroupName": { "Type": "String" },
+      "ConsentsPathPattern": { "Type": "String" },
+      "ConsentsUri": { "Type": "String" },
+      "ConsentsRDSUsername": { "Type": "String" },
+      "ConsentsRDSPassword": { "Type": "String" },
+      "ConsentsRDSInstanceIdentifier": { "Type": "String" }
+    },
+    "Resources": {
+      "ALB": {
+        "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+        "Properties": {
+          "Type": "application",
+          "IpAddressType": "ipv4",
+          "Scheme": "internet-facing",
+          "Subnets": [{"Ref": "SubnetA"}, {"Ref": "SubnetB"}, {"Ref": "SubnetC"}],
+          "LoadBalancerAttributes" : [
+            { "Key" : "idle_timeout.timeout_seconds", "Value" : "10" }
+          ],
+          "SecurityGroups": [{"Ref": "EC2SecurityGroup"}],
+          "Tags": [{
+              "Key": "Name",
+              "Value": "EC2-ALB"
+          }]
+        }
+      },
+      "ECSCluster": {
+        "Type": "AWS::ECS::Cluster",
+        "Properties": { "ClusterName": { "Ref": "ClusterName" } }
+      },
+      "ECSAutoScalingGroup": {
+        "Type": "AWS::AutoScaling::AutoScalingGroup",
+        "Properties": {
+          "VPCZoneIdentifier": [{"Ref": "SubnetA"}, {"Ref": "SubnetB"}, {"Ref": "SubnetC"}],
+          "LaunchConfigurationName": { "Ref": "EC2Instance" },
+          "MinSize": "1",
+          "MaxSize": "1",
+          "DesiredCapacity": "1"
+        }
+      },
+      "EC2Instance": {
+        "Type": "AWS::AutoScaling::LaunchConfiguration",
+        "Properties": {
+          "ImageId": "ami-67cbd003",
+          "InstanceType": "t2.small",
+          "AssociatePublicIpAddress": true,
+          "SecurityGroups": [{"Ref": "EC2SecurityGroup"}],
+          "IamInstanceProfile": {"Ref": "IamInstanceProfile"},
+          "KeyName": {"Ref": "KeyName"},
+          "UserData": {
+            "Fn::Base64": {
+              "Fn::Join": [
+                "",
+                [
+                  "#!/bin/bash -xe\n",
+                  "echo ECS_CLUSTER=",
+                  { "Ref": "ECSCluster" },
+                  " >> /etc/ecs/ecs.config\n"
+                ]
+              ]
+            }
+          }
+        }
+      },
+      "KonsentusRDSInstance" : {
+        "Type" : "AWS::RDS::DBInstance",
+        "DependsOn": "RDSSecurityGroup",
+        "Properties" : {
+          "DBInstanceClass" : "db.t2.micro",
+          "Engine" : "postgres",
+          "AllocatedStorage" : "20",
+          "VPCSecurityGroups": [ { "Ref" : "RDSSecurityGroup" }],
+          "MasterUsername" : { "Ref" : "RDSUsername" },
+          "MasterUserPassword" : { "Ref" : "RDSPassword" },
+          "DBName": { "Ref" : "RDSInstanceIdentifier" },
+          "DBInstanceIdentifier": { "Ref" : "RDSInstanceIdentifier" }
+        },
+        "DeletionPolicy" : "Delete"
+      },
+      "ImmutableLogRDSInstance" : {
+        "Type" : "AWS::RDS::DBInstance",
+        "DependsOn": "RDSSecurityGroup",
+        "Properties" : {
+          "DBInstanceClass" : "db.t2.micro",
+          "Engine" : "postgres",
+          "AllocatedStorage" : "20",
+          "VPCSecurityGroups": [ { "Ref" : "RDSSecurityGroup" }],
+          "MasterUsername" : { "Ref" : "ImmutableLogRDSUsername" },
+          "MasterUserPassword" : { "Ref" : "ImmutableLogRDSPassword" },
+          "DBName": { "Ref" : "ImmutableLogRDSInstanceIdentifier" },
+          "DBInstanceIdentifier": { "Ref" : "ImmutableLogRDSInstanceIdentifier" }
+        },
+        "DeletionPolicy" : "Delete"
+      },
+      "TPPAuthenticationRDSInstance" : {
+        "Type" : "AWS::RDS::DBInstance",
+        "DependsOn": "RDSSecurityGroup",
+        "Properties" : {
+          "DBInstanceClass" : "db.t2.micro",
+          "Engine" : "postgres",
+          "AllocatedStorage" : "20",
+          "VPCSecurityGroups": [ { "Ref" : "RDSSecurityGroup" }],
+          "MasterUsername" : { "Ref" : "TPPAuthenticationRDSUsername" },
+          "MasterUserPassword" : { "Ref" : "TPPAuthenticationRDSPassword" },
+          "DBName": { "Ref" : "TPPAuthenticationRDSInstanceIdentifier" },
+          "DBInstanceIdentifier": { "Ref" : "TPPAuthenticationRDSInstanceIdentifier" }
+        },
+        "DeletionPolicy" : "Delete"
+      },
+      "ConsentsRDSInstance" : {
+        "Type" : "AWS::RDS::DBInstance",
+        "DependsOn": "RDSSecurityGroup",
+        "Properties" : {
+          "DBInstanceClass" : "db.t2.micro",
+          "Engine" : "postgres",
+          "AllocatedStorage" : "20",
+          "VPCSecurityGroups": [ { "Ref" : "RDSSecurityGroup" }],
+          "MasterUsername" : { "Ref" : "ConsentsRDSUsername" },
+          "MasterUserPassword" : { "Ref" : "ConsentsRDSPassword" },
+          "DBName": { "Ref" : "ConsentsRDSInstanceIdentifier" },
+          "DBInstanceIdentifier": { "Ref" : "ConsentsRDSInstanceIdentifier" }
+        },
+        "DeletionPolicy" : "Delete"
+      },
+      "DDTask": {
+        "Type": "AWS::ECS::TaskDefinition",
+        "Properties": {
+          "ContainerDefinitions": [
+            {
+              "Name": "konsentus-dd-task",
+              "MountPoints": [
+                {
+                  "ContainerPath": "/var/run/docker.sock",
+                  "SourceVolume": "docker_sock",
+                  "ReadOnly": true
+                },
+                {
+                  "ContainerPath": "/host/sys/fs/cgroup",
+                  "SourceVolume": "cgroup",
+                  "ReadOnly": true
+                },
+                {
+                  "ContainerPath": "/opt/datadog-agent/run",
+                  "SourceVolume": "pointdir",
+                  "ReadOnly": false
+                },
+                {
+                  "ContainerPath": "/host/proc",
+                  "SourceVolume": "proc",
+                  "ReadOnly": true
+                }
+              ],
+              "Image": "datadog/agent:latest",
+              "Environment": [{
+                "Name": "DD_HOSTNAME",
+                "Value": { "Ref" : "DDHostName" }
+              }, {
+                "Name": "DD_API_KEY",
+                "Value": { "Ref" : "DDApiKey" }
+              },  {
+                "Name": "DD_LOGS_ENABLED",
+                "Value": "true"
+              }, {
+                "Name": "DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL",
+                "Value": "true"
+              }, {
+                "Name": "SD_BACKEND",
+                "Value": "docker"
+              }]
+            }
+          ],
+          "Memory": "256",
+          "Family": "datadog-agent-task",
+          "Volumes": [
+            {
+              "Host": {
+                "SourcePath": "/var/run/docker.sock"
+              },
+              "Name": "docker_sock"
+            },
+            {
+              "Host": {
+                "SourcePath": "/proc/"
+              },
+              "Name": "proc"
+            },
+            {
+              "Host": {
+                "SourcePath": "/opt/datadog-agent/run"
+              },
+              "Name": "pointdir"
+            },
+            {
+              "Host": {
+                "SourcePath": "/cgroup/"
+              },
+              "Name": "cgroup"
+            }
+          ]
+        }
+      },
+      "APIGatewayTask": {
+        "Type": "AWS::ECS::TaskDefinition",
+        "Properties": {
+          "ContainerDefinitions": [
+            {
+              "Name": "konsentus-api-stub-task",
+              "Image": {
+                "Fn::Join": [
+                  "",
+                  [
+                    { "Ref": "ApiStubRepositoryAddress"},
+                    ":",
+                    { "Ref": "ApiStubTagName" }
+                  ]
+                ]
+              },
+              "Memory": "128",
+              "PortMappings": [{
+                  "ContainerPort": "9000",
+                  "HostPort" : "0"
+              }],
+              "Environment": [
+                {
+                  "Name": "DATABASE_CONNECTION_STRING",
+                  "Value": {
+                    "Fn::Join": [ "", [
+                        "postgresql://",
+                        { "Ref": "ConsentsRDSUsername" },
+                        ":",
+                        { "Ref": "ConsentsRDSPassword" },
+                        "@",
+                        { "Fn::GetAtt": [
+                            "ConsentsRDSInstance",
+                            "Endpoint.Address"
+                        ]},
+                        "/",
+                        { "Ref" : "ConsentsRDSInstanceIdentifier" }
+                      ]
+                    ]
+                  }
+                },
+                {
+                  "Name": "TPP_AUTHENTICATION_SERVICE",
+                  "Value": { "Ref" : "TPPAuthenticationUri" }
+                },
+                {
+                  "Name": "CONSENTS_SERVICE",
+                  "Value": { "Ref" : "ConsentsUri" }
+                },
+                {
+                  "Name": "IMMUTABLE_LOG_SERVICE",
+                  "Value": { "Ref" : "ImmutableLogUri" }
+                },
+                {
+                  "Name": "NODE_ENV",
+                  "Value": {"Ref": "NodeEnv"}
+                },
+                {
+                  "Name": "SENTRY_ENVIRONMENT",
+                  "Value": {"Ref": "SentryConfigEnvironment"}
+                },
+                {
+                  "Name": "SENTRY_CONNECTION_STRING",
+                  "Value": {"Ref": "SentryConfigConnectionString"}
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "TPPAuthenticationTask": {
+        "Type": "AWS::ECS::TaskDefinition",
+        "Properties": {
+          "ContainerDefinitions": [
+            {
+              "Name": "tpp-authentication-task",
+              "Image": {
+                "Fn::Join": [
+                  "",
+                  [
+                    { "Ref": "TPPAuthenticationRepositoryAddress"},
+                    ":",
+                    { "Ref": "TPPAuthenticationTagName" }
+                  ]
+                ]
+              },
+              "Memory": "128",
+              "PortMappings": [{
+                  "ContainerPort": "3001",
+                  "HostPort" : "0"
+              }],
+              "Environment": [
+                {
+                  "Name": "DATABASE_CONNECTION_STRING",
+                  "Value": {
+                    "Fn::Join": [ "", [
+                        "postgresql://",
+                        { "Ref": "TPPAuthenticationRDSUsername" },
+                        ":",
+                        { "Ref": "TPPAuthenticationRDSPassword" },
+                        "@",
+                        { "Fn::GetAtt": [
+                            "TPPAuthenticationRDSInstance",
+                            "Endpoint.Address"
+                        ]},
+                        "/",
+                        { "Ref" : "TPPAuthenticationRDSInstanceIdentifier" }
+                      ]
+                    ]
+                  }
+                },
+                {
+                  "Name": "NODE_ENV",
+                  "Value": {"Ref": "NodeEnv"}
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ConsentsTask": {
+        "Type": "AWS::ECS::TaskDefinition",
+        "Properties": {
+          "ContainerDefinitions": [
+            {
+              "Name": "consents-task",
+              "Image": {
+                "Fn::Join": [
+                  "",
+                  [
+                    { "Ref": "ConsentsRepositoryAddress"},
+                    ":",
+                    { "Ref": "ConsentsTagName" }
+                  ]
+                ]
+              },
+              "Memory": "128",
+              "PortMappings": [{
+                  "ContainerPort": "3002",
+                  "HostPort" : "0"
+              }],
+              "Environment": [
+                {
+                  "Name": "DATABASE_CONNECTION_STRING",
+                  "Value": {
+                    "Fn::Join": [ "", [
+                        "postgresql://",
+                        { "Ref": "ConsentsRDSUsername" },
+                        ":",
+                        { "Ref": "ConsentsRDSPassword" },
+                        "@",
+                        { "Fn::GetAtt": [
+                            "ConsentsRDSInstance",
+                            "Endpoint.Address"
+                        ]},
+                        "/",
+                        { "Ref" : "ConsentsRDSInstanceIdentifier" }
+                      ]
+                    ]
+                  }
+                },
+                {
+                  "Name": "NODE_ENV",
+                  "Value": {"Ref": "NodeEnv"}
+                },
+                {
+                  "Name": "IMMUTABLE_LOG_SERVICE",
+                  "Value": { "Ref" : "ImmutableLogUri" }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ImmutableLogTask": {
+        "Type": "AWS::ECS::TaskDefinition",
+        "Properties": {
+          "ContainerDefinitions": [
+            {
+              "Name": "immutable-log-task",
+              "Image": {
+                "Fn::Join": [
+                  "",
+                  [
+                    { "Ref": "ImmutableLogRepositoryAddress"},
+                    ":",
+                    { "Ref": "ImmutableLogTagName" }
+                  ]
+                ]
+              },
+              "Memory": "128",
+              "PortMappings": [{
+                  "ContainerPort": "3000",
+                  "HostPort" : "0"
+              }],
+              "Environment": [
+                {
+                  "Name": "DATABASE_CONNECTION_STRING",
+                  "Value": {
+                    "Fn::Join": [ "", [
+                        "postgresql://",
+                        { "Ref": "ImmutableLogRDSUsername" },
+                        ":",
+                        { "Ref": "ImmutableLogRDSPassword" },
+                        "@",
+                        { "Fn::GetAtt": [
+                            "ImmutableLogRDSInstance",
+                            "Endpoint.Address"
+                        ]},
+                        "/",
+                        { "Ref" : "ImmutableLogRDSInstanceIdentifier" }
+                      ]
+                    ]
+                  }
+                },
+                {
+                  "Name": "NODE_ENV",
+                  "Value": {"Ref": "NodeEnv"}
+                },
+                {
+                  "Name": "PORT",
+                  "Value": {"Ref": "ImmutableLogsPort"}
+                },
+                {
+                  "Name": "SECRET",
+                  "Value": {"Ref": "ImmutableLogsSecret"}
+                },
+                {
+                  "Name": "LOG_LEVEL",
+                  "Value": {"Ref": "ImmutableLogsLogLevel"}
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "KonsentusTargetGroup": {
+        "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+        "DependsOn": "ALB",
+        "Properties": {
+          "TargetGroupAttributes": [{
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "20"
+          }],
+          "HealthCheckProtocol": "HTTP",
+          "HealthCheckPath": "/status",
+          "Matcher": { "HttpCode": "200-399" },
+          "Name": { "Ref": "TargetGroupName" },
+          "Port": 80,
+          "Protocol": "HTTP",
+          "VpcId": {"Ref": "VpcId"}
+        }
+      },
+      "TPPAuthenticationTargetGroup": {
+        "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+        "DependsOn": "ALB",
+        "Properties": {
+          "TargetGroupAttributes": [{
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "20"
+          }],
+          "HealthCheckProtocol": "HTTP",
+          "HealthCheckPath": "/tpp-auth/status",
+          "Matcher": { "HttpCode": "200-399" },
+          "Name": { "Ref": "TPPAuthenticationTargetGroupName" },
+          "Port": 80,
+          "Protocol": "HTTP",
+          "VpcId": {"Ref": "VpcId"}
+        }
+      },
+      "ImmutableLogTargetGroup": {
+        "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+        "DependsOn": "ALB",
+        "Properties": {
+          "TargetGroupAttributes": [{
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "20"
+          }],
+          "HealthCheckProtocol": "HTTP",
+          "HealthCheckPath": "/logs/status",
+          "Matcher": { "HttpCode": "200-399" },
+          "Name": { "Ref": "ImmutableLogTargetGroupName" },
+          "Port": 80,
+          "Protocol": "HTTP",
+          "VpcId": {"Ref": "VpcId"}
+        }
+      },
+      "ConsentsTargetGroup": {
+        "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+        "DependsOn": "ALB",
+        "Properties": {
+          "TargetGroupAttributes": [{
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "20"
+          }],
+          "HealthCheckProtocol": "HTTP",
+          "HealthCheckPath": "/consents/status",
+          "Matcher": { "HttpCode": "200-399" },
+          "Name": { "Ref": "ConsentsTargetGroupName" },
+          "Port": 80,
+          "Protocol": "HTTP",
+          "VpcId": {"Ref": "VpcId"}
+        }
+      },
+      "KonsentusListener": {
+        "Type": "AWS::ElasticLoadBalancingV2::Listener",
+        "DependsOn": "ALB",
+        "Properties": {
+          "DefaultActions": [{
+              "Type": "forward",
+              "TargetGroupArn": {
+                "Ref": "KonsentusTargetGroup"
+              }
+          }],
+          "LoadBalancerArn": { "Ref": "ALB" },
+          "Port": "443",
+          "Protocol": "HTTPS",
+          "Certificates": [{
+              "CertificateArn": {
+                "Ref": "SSLCert"
+              }
+          }]
+        }
+      },
+      "TPPAuthenticationListenerRule": {
+        "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+        "Properties": {
+          "Actions": [
+            {
+              "Type": "forward",
+              "TargetGroupArn": {
+                "Ref": "TPPAuthenticationTargetGroup"
+              }
+            }
+          ],
+          "Conditions": [{
+            "Field": "path-pattern",
+            "Values": [{
+              "Ref": "TPPAuthenticationPathPattern"
+            }]
+          }],
+          "ListenerArn": {
+            "Ref": "KonsentusListener"
+          },
+          "Priority": 1
+        }
+      },
+      "ImmutableLogListenerRule": {
+        "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+        "Properties": {
+          "Actions": [
+            {
+              "Type": "forward",
+              "TargetGroupArn": {
+                "Ref": "ImmutableLogTargetGroup"
+              }
+            }
+          ],
+          "Conditions": [{
+            "Field": "path-pattern",
+            "Values": [{
+              "Ref": "ImmutableLogPathPattern"
+            }]
+          }],
+          "ListenerArn": {
+            "Ref": "KonsentusListener"
+          },
+          "Priority": 2
+        }
+      },
+      "ConsentsListenerRule": {
+        "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+        "Properties": {
+          "Actions": [
+            {
+              "Type": "forward",
+              "TargetGroupArn": {
+                "Ref": "ConsentsTargetGroup"
+              }
+            }
+          ],
+          "Conditions": [{
+            "Field": "path-pattern",
+            "Values": [{
+              "Ref": "ConsentsPathPattern"
+            }]
+          }],
+          "ListenerArn": {
+            "Ref": "KonsentusListener"
+          },
+          "Priority": 3
+        }
+      },
+      "KonsentusApiStubListenerRule": {
+        "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+        "Properties": {
+          "Actions": [
+            {
+              "Type": "forward",
+              "TargetGroupArn": {
+                "Ref": "KonsentusTargetGroup"
+              }
+            }
+          ],
+          "Conditions": [{
+            "Field": "path-pattern",
+            "Values": [{
+              "Ref": "APIGatewayPathPattern"
+            }]
+          }],
+          "ListenerArn": {
+            "Ref": "KonsentusListener"
+          },
+          "Priority": 5
+        }
+      },
+      "DDService": {
+        "Type": "AWS::ECS::Service",
+        "DependsOn": "KonsentusListener",
+        "Properties": {
+          "ServiceName": "konsentus-data-dog-service",
+          "Cluster": {
+            "Ref": "ECSCluster"
+          },
+          "DesiredCount": 1,
+          "TaskDefinition": {
+            "Ref": "DDTask"
+          },
+          "DeploymentConfiguration": {
+            "MaximumPercent": 200,
+            "MinimumHealthyPercent": 100
+          }
+        }
+      },
+      "KonsentusApiStubService": {
+        "Type": "AWS::ECS::Service",
+        "DependsOn": "KonsentusListener",
+        "Properties": {
+          "ServiceName": "konsentus-api-stub-service",
+          "Cluster": {
+            "Ref": "ECSCluster"
+          },
+          "DesiredCount": 1,
+          "TaskDefinition": {
+            "Ref": "APIGatewayTask"
+          },
+          "DeploymentConfiguration": {
+            "MaximumPercent": 200,
+            "MinimumHealthyPercent": 100
+          },
+          "LoadBalancers": [
+            {
+              "TargetGroupArn": {
+                "Ref": "KonsentusTargetGroup"
+              },
+              "ContainerName": "konsentus-api-stub-task",
+              "ContainerPort": 9000
+            }
+          ]
+        }
+      },
+      "TPPAuthenticationService": {
+        "Type": "AWS::ECS::Service",
+        "DependsOn": "KonsentusListener",
+        "Properties": {
+          "ServiceName": "tpp-authentication-service",
+          "Cluster": {
+            "Ref": "ECSCluster"
+          },
+          "DesiredCount": 1,
+          "TaskDefinition": {
+            "Ref": "TPPAuthenticationTask"
+          },
+          "DeploymentConfiguration": {
+            "MaximumPercent": 200,
+            "MinimumHealthyPercent": 100
+          },
+          "LoadBalancers": [
+            {
+              "TargetGroupArn": {
+                "Ref": "TPPAuthenticationTargetGroup"
+              },
+              "ContainerName": "tpp-authentication-task",
+              "ContainerPort": 3001
+            }
+          ]
+        }
+      },
+      "ImmutableLogService": {
+        "Type": "AWS::ECS::Service",
+        "DependsOn": "KonsentusListener",
+        "Properties": {
+          "ServiceName": "immutable-log-service",
+          "Cluster": {
+            "Ref": "ECSCluster"
+          },
+          "DesiredCount": 1,
+          "TaskDefinition": {
+            "Ref": "ImmutableLogTask"
+          },
+          "DeploymentConfiguration": {
+            "MaximumPercent": 200,
+            "MinimumHealthyPercent": 100
+          },
+          "LoadBalancers": [
+            {
+              "TargetGroupArn": {
+                "Ref": "ImmutableLogTargetGroup"
+              },
+              "ContainerName": "immutable-log-task",
+              "ContainerPort": 3000
+            }
+          ]
+        }
+      },
+      "ConsentsService": {
+        "Type": "AWS::ECS::Service",
+        "DependsOn": "KonsentusListener",
+        "Properties": {
+          "ServiceName": "consents-service",
+          "Cluster": {
+            "Ref": "ECSCluster"
+          },
+          "DesiredCount": 1,
+          "TaskDefinition": {
+            "Ref": "ConsentsTask"
+          },
+          "DeploymentConfiguration": {
+            "MaximumPercent": 200,
+            "MinimumHealthyPercent": 100
+          },
+          "LoadBalancers": [
+            {
+              "TargetGroupArn": {
+                "Ref": "ConsentsTargetGroup"
+              },
+              "ContainerName": "consents-task",
+              "ContainerPort": 3002
+            }
+          ]
+        }
+      },
+      "EC2DNS": {
+        "Type": "AWS::Route53::RecordSet",
+        "DependsOn": "ALB",
+        "Properties": {
+          "HostedZoneName": "konsentus-dev.com.",
+          "Name": {
+            "Ref": "DNSSubDomain"
+          },
+          "Type": "CNAME",
+          "TTL": "30",
+          "ResourceRecords": [
+            {
+              "Fn::GetAtt": [
+                "ALB",
+                "DNSName"
+              ]
+            }
+          ]
+        }
+      },
+      "RDSSecurityGroup": {
+        "Type" : "AWS::EC2::SecurityGroup",
+        "Properties" : {
+          "GroupName" : { "Ref" : "RDSSecurityGroupGateway"},
+          "GroupDescription" : "open entry point for rds",
+          "SecurityGroupIngress" : [{
+            "IpProtocol" : "tcp",
+            "FromPort" : "5432",
+            "ToPort" : "5432",
+            "CidrIp": "0.0.0.0/0"
+          }],
+          "SecurityGroupEgress" : [{
+            "IpProtocol" : "tcp",
+            "FromPort" : "5432",
+            "ToPort" : "5432",
+            "CidrIp": "0.0.0.0/0"
+          }],
+          "VpcId" : { "Ref" : "VpcId" }
+        }
+      },
+      "ImmutableLogRDSSecurityGroup": {
+        "Type" : "AWS::EC2::SecurityGroup",
+        "Properties" : {
+          "GroupName" : { "Ref" : "ImmutableLogRDSSecurityGroupGateway"},
+          "GroupDescription" : "open entry point for rds",
+          "SecurityGroupIngress" : [{
+            "IpProtocol" : "tcp",
+            "FromPort" : "5432",
+            "ToPort" : "5432",
+            "CidrIp": "0.0.0.0/0"
+          }],
+          "SecurityGroupEgress" : [{
+            "IpProtocol" : "tcp",
+            "FromPort" : "5432",
+            "ToPort" : "5432",
+            "CidrIp": "0.0.0.0/0"
+          }],
+          "VpcId" : { "Ref" : "VpcId" }
+        }
+      }
+     }
+    }

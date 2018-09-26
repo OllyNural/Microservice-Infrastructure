@@ -1,0 +1,39 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Create Services to manage portfolio tasks",
+  "Parameters": {
+    "repositoryName": {
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "PortfolioService": {
+      "Type": "AWS::ECS::Service",
+      "Properties": {
+        "ServiceName": "portfolio-service",
+        "Cluster": {
+          "Fn::ImportValue": "portfolio-cluster"
+        },
+        "DesiredCount": 1,
+        "TaskDefinition": {
+          "Fn::ImportValue": "portfolio-task"
+        },
+        "DeploymentConfiguration": {
+          "MaximumPercent": 200,
+          "MinimumHealthyPercent": 100
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "PortfolioService": {
+      "Description": "The Service managing the portfolio-task definition",
+      "Export": {
+          "Name": "portfolio-service"
+      },
+      "Value": {
+        "Ref": "PortfolioService"
+      }
+    }
+  }
+}

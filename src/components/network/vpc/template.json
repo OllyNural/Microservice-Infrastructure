@@ -1,0 +1,38 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Create VPC Network",
+  "Parameters": {
+    "Name": {
+      "Description": "The name tag for this Vpc",
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "PortfolioVPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "EnableDnsHostnames": "true",
+        "EnableDnsSupport": "true",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "Name"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "PortfolioVPC": {
+      "Description": "ID of the VPC",
+      "Export": {
+        "Name": "portfolio-vpc"
+      },
+      "Value": {
+        "Ref": "PortfolioVPC"
+      }
+    }
+  }
+}
