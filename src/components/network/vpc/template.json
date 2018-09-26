@@ -5,6 +5,10 @@
     "Name": {
       "Description": "The name tag for this Vpc",
       "Type": "String"
+    },
+    "CidrBlock": {
+      "Description": "The CIDR Block for this VPC",
+      "Type": "String"
     }
   },
   "Resources": {
@@ -13,6 +17,7 @@
       "Properties": {
         "EnableDnsHostnames": "true",
         "EnableDnsSupport": "true",
+        "CidrBlock": { "Ref": "CidrBlock" },
         "Tags": [
           {
             "Key": "Name",

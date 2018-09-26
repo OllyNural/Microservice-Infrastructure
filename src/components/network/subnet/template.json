@@ -10,7 +10,7 @@
   },
   "Parameters": {
     "PrivateSubnetCCIDR": {
-      "Description": "Name of the Vpc to populate",
+      "Description": "Cidr Block of the Subnet",
       "Type": "String"
     }
   },
@@ -21,6 +21,7 @@
         "VpcId": {
           "Fn::ImportValue": "portfolio-vpc"
         },
+        "CidrBlock": { "Ref": "PrivateSubnetCCIDR" },
         "AvailabilityZone": {
           "Fn::Sub": "${AWS::Region}a"
         },
