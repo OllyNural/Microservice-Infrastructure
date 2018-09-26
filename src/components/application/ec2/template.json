@@ -7,6 +7,16 @@
     }
   },
   "Resources": {
+    "ECSAutoScalingGroup": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "VPCZoneIdentifier": [{ "Fn::ImportValue": "portfolio-subnet-a"}],
+        "LaunchConfigurationName": { "Ref": "EC2Instance" },
+        "MinSize": "1",
+        "MaxSize": "1",
+        "DesiredCapacity": "1"
+      }
+    },
     "EC2Instance": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Properties": {
