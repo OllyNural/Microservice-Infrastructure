@@ -1,6 +1,6 @@
 [
     {
-      "ParameterKey": "NODE_PATH",
+      "ParameterKey": "nodepath",
       "ParameterValue": "src/"
     }
   ]

@@ -2,7 +2,7 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "Create task definitions to define how to run the build portfolio ",
   "Parameters": {
-    "NODE_PATH": {
+    "nodepath": {
       "Type": "String"
     }
   },
@@ -29,7 +29,7 @@
             }],
             "Environment": [
               {
-                "Name": "NODE_PATH",
+                "Name": "nodepath",
                 "Value": { "Ref": "NODE_PATH" }
               }
             ]
