@@ -18,9 +18,9 @@ jobs:
             aws_login=`aws ecr get-login --no-include-email --region eu-west-2`
             eval $aws_login
 
-            ls
+            ls scripts
 
-            bash scripts/create.sh
+            sh scripts/create.sh
 
 workflows:
   version: 2
