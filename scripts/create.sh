@@ -2,7 +2,9 @@
 
 cd src
 
-cd components/application/ecr/ && sh create.sh
+cd components/application/ecr
+ls
+sh create.sh
 cd ../../../
 
 # sh src/components/application/cluster/create.sh
