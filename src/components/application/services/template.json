@@ -2,7 +2,7 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "Create Services to manage portfolio tasks",
   "Parameters": {
-    "repositoryName": {
+    "RepositoryName": {
       "Type": "String"
     }
   },
@@ -10,7 +10,7 @@
     "PortfolioService": {
       "Type": "AWS::ECS::Service",
       "Properties": {
-        "ServiceName": "portfolio-service",
+        "ServiceName": { "Ref": "RepositoryName" },
         "Cluster": {
           "Fn::ImportValue": "portfolio-cluster"
         },
