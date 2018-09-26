@@ -2,7 +2,7 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "Create task definitions to define how to run the build portfolio ",
   "Parameters": {
-    "repositoryName": {
+    "NODE_PATH": {
       "Type": "String"
     }
   },
@@ -17,9 +17,8 @@
               "Fn::Join": [
                 "",
                 [
-                  { "Ref": "ConsentsRepositoryAddress"},
-                  ":",
-                  { "Ref": "ConsentsTagName" }
+                  { "Fn::ImportValue": "PortfolioECRepositoryARN" },
+                  ":latest"
                 ]
               ]
             },
@@ -31,7 +30,7 @@
             "Environment": [
               {
                 "Name": "NODE_PATH",
-                "Value": "src/"
+                "Value": { "Ref": "NODE_PATH" }
               }
             ]
           }

@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Creates EC2 instances",
+  "Description": "Creates cluster instances",
   "Parameters": {
     "ClusterName": {
       "Type": "String"
