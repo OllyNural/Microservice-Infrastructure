@@ -5,33 +5,12 @@
     "Name": {
       "Description": "The name tag for this Vpc",
       "Type": "String"
-    },
-    "CidrBlock": {
-      "Description": "The CIDR Block for this VPC",
-      "Type": "String"
     }
   },
   "Resources": {
-    "PortfolioVPC": {
-      "Type": "AWS::EC2::VPC",
-      "Properties": {
-        "EnableDnsHostnames": "true",
-        "EnableDnsSupport": "true",
-        "CidrBlock": {
-          "Ref": "CidrBlock"
-        },
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": {
-              "Ref": "Name"
-            }
-          }
-        ]
-      }
-    },
     "PublicSubnetSecurityGroup": {
       "Type": "AWS::EC2::SecurityGroup",
+      "DependsOn": "PortfolioVPC",
       "Properties": {
         "GroupDescription": "Portfolio subnet security group",
         "VpcId": {
@@ -61,24 +40,39 @@
         ]
       }
     },
-    "Outputs": {
-      "PortfolioVPC": {
-        "Description": "ID of the VPC",
-        "Export": {
-          "Name": "portfolio-vpc"
-        },
-        "Value": {
-          "Ref": "PortfolioVPC"
-        }
+    "PortfolioVPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "EnableDnsHostnames": "true",
+        "EnableDnsSupport": "true",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "Name"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "PortfolioVPC": {
+      "Description": "ID of the VPC",
+      "Export": {
+        "Name": "portfolio-vpc"
       },
-      "PublicSecurityGroup": {
-        "Description": "Portfolio subnet security group",
-        "Export": {
-          "Name": "portfolio-security-group"
-        },
-        "Value": {
-          "Ref": "PublicSubnetSecurityGroup"
-        }
+      "Value": {
+        "Ref": "PortfolioVPC"
+      }
+    },
+    "PortfolioSecurityGroup": {
+      "Description": "Security Group for Portfolio Subnet",
+      "Export": {
+        "Name": "portfolio-security-group"
+      },
+      "Value": {
+        "Ref": "PublicSubnetSecurityGroup"
       }
     }
   }
