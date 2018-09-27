@@ -19,10 +19,7 @@
           "Name": "portfolio-cluster"
       },
       "Value": {
-          "Fn::GetAtt": [
-            "ECSCluster",
-            "Arn"
-          ]
+        "Ref": "ECSCluster"
       }
     }
   }

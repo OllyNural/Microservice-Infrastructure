@@ -35,7 +35,7 @@
     "EC2Instance": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Properties": {
-        "ImageId": "ami-0bdb1d6c15a40392c",
+        "ImageId": "ami-05b65c0f6a75c1c64",
         "InstanceType": "t2.micro",
         "SecurityGroups": [
           {
