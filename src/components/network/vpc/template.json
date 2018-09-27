@@ -7,7 +7,8 @@
       "Type": "String"
     },
     "CidrBlock": {
-      "Ref": "CidrBlock"
+      "Description": "The Cidr Block for this Vpc",
+      "Type": "String"
     }
   },
   "Resources": {
@@ -48,7 +49,9 @@
       "Properties": {
         "EnableDnsHostnames": "true",
         "EnableDnsSupport": "true",
-        "CidrBlock": { "Ref": "CidrBlock" },
+        "CidrBlock": {
+          "Ref": "CidrBlock"
+        },
         "Tags": [
           {
             "Key": "Name",
