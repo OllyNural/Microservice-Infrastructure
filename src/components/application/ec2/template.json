@@ -36,7 +36,7 @@
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Properties": {
         "ImageId": "ami-0bdb1d6c15a40392c",
-        "InstanceType": "t2.small",
+        "InstanceType": "t2.micro",
         "SecurityGroups": [
           {
             "Fn::ImportValue": "portfolio-security-group"
