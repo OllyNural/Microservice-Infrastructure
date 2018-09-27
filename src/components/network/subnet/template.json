@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Creates Subnets",
+  "Description": "Creates Subnets, Internet Gateways and Route Tables",
   "Parameters": {
     "PrivateSubnetCCIDR": {
       "Description": "Cidr Block of the Subnet",
@@ -8,13 +8,37 @@
     }
   },
   "Resources": {
+    "InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PortfolioInternetGateway"
+          }
+        ]
+      }
+    },
+    "InternetGatewayAttachment": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "InternetGateway"
+        },
+        "VpcId": {
+          "Fn::ImportValue": "portfolio-vpc"
+        }
+      }
+    },
     "PublicSubnetAResource": {
       "Type": "AWS::EC2::Subnet",
       "Properties": {
         "VpcId": {
           "Fn::ImportValue": "portfolio-vpc"
         },
-        "CidrBlock": { "Ref": "PrivateSubnetCCIDR" },
+        "CidrBlock": {
+          "Ref": "PrivateSubnetCCIDR"
+        },
         "AvailabilityZone": {
           "Fn::Sub": "${AWS::Region}a"
         },
@@ -29,6 +53,44 @@
           }
         ]
       }
+    },
+    "PublicSubnetAInternetGatewayRoute": {
+      "DependsOn": "InternetGatewayAttachment",
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "InternetGateway"
+        },
+        "RouteTableId": {
+          "Ref": "PublicSubnetARouteTable"
+        }
+      },
+      "Type": "AWS::EC2::Route"
+    },
+    "PublicSubnetARouteTable": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PortfolioSubnetARouteTable"
+          }
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "portfolio-vpc"
+        }
+      },
+      "Type": "AWS::EC2::RouteTable"
+    },
+    "PublicSubnetARouteTableAssociation": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "PublicSubnetARouteTable"
+        },
+        "SubnetId": {
+          "Ref": "PublicSubnetAResource"
+        }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
     }
   },
   "Outputs": {
