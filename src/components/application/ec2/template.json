@@ -37,7 +37,7 @@
       "Properties": {
         "ImageId": "ami-0bdb1d6c15a40392c",
         "InstanceType": "t2.small",
-        "SubnetId": { "Fn::ImportValue": "portfolio-subnet" },
+        "SubnetId": { "Fn::ImportValue": "portfolio-subnet-a" },
         "SecurityGroups": [
           {
             "Fn::ImportValue": "portfolio-security-group"
