@@ -10,8 +10,14 @@
     "ECSAutoScalingGroup": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
-        "VPCZoneIdentifier": [{ "Fn::ImportValue": "portfolio-subnet-a"}],
-        "LaunchConfigurationName": { "Ref": "EC2Instance" },
+        "VPCZoneIdentifier": [
+          {
+            "Fn::ImportValue": "portfolio-subnet-a"
+          }
+        ],
+        "LaunchConfigurationName": {
+          "Ref": "EC2Instance"
+        },
         "MinSize": "1",
         "MaxSize": "1",
         "DesiredCapacity": "1"
@@ -20,18 +26,30 @@
     "IamInstanceProfile": {
       "Type": "AWS::IAM::InstanceProfile",
       "Properties": {
-         "Roles": [ "ecsInstanceRole" ],
-         "InstanceProfileName": "EC2InstancePortfolioProfile"
+        "Roles": [
+          "ecsInstanceRole"
+        ],
+        "InstanceProfileName": "EC2InstancePortfolioProfile"
       }
-   },
+    },
     "EC2Instance": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Properties": {
         "ImageId": "ami-0bdb1d6c15a40392c",
         "InstanceType": "t2.small",
+        "SubnetId": { "Fn::ImportValue": "portfolio-subnet" },
+        "SecurityGroups": [
+          {
+            "Fn::ImportValue": "portfolio-security-group"
+          }
+        ],
         "AssociatePublicIpAddress": true,
-        "IamInstanceProfile": { "Ref": "IamInstanceProfile" },
-        "KeyName": {"Ref": "KeyName"},
+        "IamInstanceProfile": {
+          "Ref": "IamInstanceProfile"
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
         "UserData": {
           "Fn::Base64": {
             "Fn::Join": [
@@ -39,7 +57,9 @@
               [
                 "#!/bin/bash -xe\n",
                 "echo ECS_CLUSTER=",
-                { "Fn::ImportValue": "portfolio-cluster" },
+                {
+                  "Fn::ImportValue": "portfolio-cluster"
+                },
                 " >> /etc/ecs/ecs.config\n"
               ]
             ]
@@ -52,7 +72,7 @@
     "EC2Instance": {
       "Description": "The instance of an EC2 to run our docker iamges on",
       "Export": {
-          "Name": "portfolio-ec2"
+        "Name": "portfolio-ec2"
       },
       "Value": {
         "Ref": "EC2Instance"

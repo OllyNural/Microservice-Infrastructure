@@ -17,7 +17,9 @@
       "Properties": {
         "EnableDnsHostnames": "true",
         "EnableDnsSupport": "true",
-        "CidrBlock": { "Ref": "CidrBlock" },
+        "CidrBlock": {
+          "Ref": "CidrBlock"
+        },
         "Tags": [
           {
             "Key": "Name",
@@ -27,16 +29,56 @@
           }
         ]
       }
-    }
-  },
-  "Outputs": {
-    "PortfolioVPC": {
-      "Description": "ID of the VPC",
-      "Export": {
-        "Name": "portfolio-vpc"
+    },
+    "PublicSubnetSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Portfolio subnet security group",
+        "VpcId": {
+          "Ref": "PortfolioVPC"
+        },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "SecurityGroupEgress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Portfolio subnet security group"
+          }
+        ]
+      }
+    },
+    "Outputs": {
+      "PortfolioVPC": {
+        "Description": "ID of the VPC",
+        "Export": {
+          "Name": "portfolio-vpc"
+        },
+        "Value": {
+          "Ref": "PortfolioVPC"
+        }
       },
-      "Value": {
-        "Ref": "PortfolioVPC"
+      "PublicSecurityGroup": {
+        "Description": "Portfolio subnet security group",
+        "Export": {
+          "Name": "portfolio-security-group"
+        },
+        "Value": {
+          "Ref": "PublicSubnetSecurityGroup"
+        }
       }
     }
   }
