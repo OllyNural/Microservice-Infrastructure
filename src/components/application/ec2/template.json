@@ -17,12 +17,20 @@
         "DesiredCapacity": "1"
       }
     },
+    "IamInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+         "Roles": [ "ecsInstanceRole" ],
+         "InstanceProfileName": "EC2InstancePortfolioProfile"
+      }
+   },
     "EC2Instance": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Properties": {
         "ImageId": "ami-0bdb1d6c15a40392c",
         "InstanceType": "t2.small",
         "AssociatePublicIpAddress": true,
+        "IamInstanceProfile": { "Ref": "IamInstanceProfile" },
         "KeyName": {"Ref": "KeyName"},
         "UserData": {
           "Fn::Base64": {
